@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="author" content="Antonio (Junior) Mota">
+  <meta name="application-name" content="Mota Business Suite">
+  <meta name="software-build-id" content="MBS-2E52A5EAD317D703">
+  <meta name="software-fingerprint" content="2e52a5ead317d703ab9a7ef9abafd68c5ac99c781f8ddae60b19565b19e10555">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mota Suite">
+  <title>Mota Business Suite</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-badge">AM</div>
+      <div>
+        <strong>Mota Suite</strong>
+        <small>Premium PWA</small>
+      </div>
+    </div>
+
+    <nav>
+      <button class="nav active" data-view="dashboard">⌂ Dashboard</button>
+      <button class="nav" data-view="vendas">▣ Vendas & Comissões</button>
+      <button class="nav" data-view="estoque">▤ Estoque</button>
+      <button class="nav" data-view="juros">$ Juros</button>
+      <button class="nav" data-view="ferramentas">⚙ Ferramentas</button>
+      <button class="nav" data-view="sobre">i Sobre</button>
+    </nav>
+
+    <div class="sidebar-sep"></div>
+
+    <button class="nav secondary" id="themeSideBtn">◐ Tema claro/escuro</button>
+    <button class="nav secondary install-side" id="installSideBtn">⬇ Instalar app</button>
+
+    <div class="sidebar-footer">
+      <strong>Antonio (Junior) Mota</strong>
+      <small>Full Stack Developer</small>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <div class="top-title">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Indicadores, desempenho e alertas</p>
+      </div>
+      <div class="top-actions">
+        <div class="clock">
+          <strong id="clockNow">--:--:--</strong>
+          <small id="dateNow">--/--/----</small>
+        </div>
+        <button id="themeBtn" class="ghost">◐ Tema</button>
+        <button id="installBtn" class="primary install-top">⬇ Instalar app</button>
+      </div>
+    </header>
+
+    <section class="view active" id="view-dashboard">
+      <div class="page-head">
+        <div>
+          <h2>Visão executiva</h2>
+          <p>Dados consolidados em tempo real a partir do SQLite.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="card accent-blue">
+          <div class="card-top"><span>TOTAL VENDIDO</span><b>↗</b></div>
+          <strong>{{ money(dash.total_vendas) }}</strong>
+          <small>{{ dash.qtd_vendas }} vendas registradas</small>
+        </article>
+        <article class="card accent-green">
+          <div class="card-top"><span>COMISSÕES</span><b>%</b></div>
+          <strong>{{ money(dash.total_comissao) }}</strong>
+          <small>Calculadas por faixa</small>
+        </article>
+        <article class="card accent-orange">
+          <div class="card-top"><span>ESTOQUE</span><b>▤</b></div>
+          <strong>{{ dash.total_estoque }}</strong>
+          <small>{{ dash.qtd_produtos }} produtos cadastrados</small>
+        </article>
+        <article class="card accent-purple">
+          <div class="card-top"><span>MOVIMENTAÇÕES</span><b>⇄</b></div>
+          <strong>{{ dash.movs }}</strong>
+          <small>Entradas e saídas</small>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="panel ranking-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Ranking de vendedores</h3>
+              <p>Desempenho consolidado por valor vendido</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Vendedor</th><th>Vendido</th><th>Qtd.</th><th>Comissão</th></tr></thead>
+              <tbody>
+                {% for nome, d in dash.ranking %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ nome }}</td>
+                  <td>{{ money(d.total) }}</td>
+                  <td>{{ d.qtd }}</td>
+                  <td>{{ money(d.comissao) }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="dashboard-side">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Distribuição de vendas</h3>
+                <p>Comparativo por vendedor</p>
+              </div>
+            </div>
+            <div id="salesBars" class="bar-chart"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Alertas de estoque</h3>
+                <p>Itens que merecem atenção</p>
+              </div>
+            </div>
+            <div class="alerts">
+              {% for p in dash.alertas %}
+              <div class="alert-row">
+                <span>{{ p.descricao }}</span>
+                <b>{{ p.estoque }} un.</b>
+              </div>
+              {% endfor %}
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-vendas">
+      <div class="page-head">
+        <div>
+          <h2>Vendas & Comissões</h2>
+          <p>CRUD completo de vendas com cálculo automático de comissão.</p>
+        </div>
+        <div class="actions">
+          <button class="primary" id="newSaleBtn">+ Nova venda</button>
+          <a class="ghost link-btn" href="/export/vendas.csv">Exportar CSV</a>
+        </div>
+      </div>
+      <section class="panel commission-chart-panel">
+        <div class="panel-head commission-chart-head">
+          <div>
+            <h3>Comissões por vendedor</h3>
+            <p>Compare as comissões acumuladas por semana, mês ou ano.</p>
+          </div>
+          <div class="period-filter" role="group" aria-label="Período do gráfico">
+            <button type="button" class="period-btn active" data-period="semana">Semana</button>
+            <button type="button" class="period-btn" data-period="mes">Mês</button>
+            <button type="button" class="period-btn" data-period="ano">Ano</button>
+          </div>
+        </div>
+
+        <div class="commission-summary">
+          <div class="mini-stat">
+            <span>Período</span>
+            <strong id="chartPeriodLabel">—</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Total vendido</span>
+            <strong id="chartSalesTotal">R$ 0,00</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Comissões</span>
+            <strong id="chartCommissionTotal">R$ 0,00</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Líder</span>
+            <strong id="chartLeader">—</strong>
+          </div>
+        </div>
+
+        <div id="commissionChart" class="commission-chart" aria-live="polite">
+          <div class="chart-empty">Carregando gráfico...</div>
+        </div>
+      </section>
+
+      <div class="panel">
+        <input class="search" id="salesSearch" placeholder="Pesquisar por vendedor...">
+        <div class="sales-table-legend">Visualização otimizada: linhas alternadas no estilo cor sim / cor não para facilitar a leitura das vendas e comissões.</div>
+        <div class="table-wrap">
+          <table id="salesTable">
+            <thead><tr><th>ID</th><th>Vendedor</th><th>Produto</th><th>Valor</th><th>% Comissão</th><th>Comissão</th><th>Registrado em</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-estoque">
+      <div class="page-head">
+        <div>
+          <h2>Gestão de estoque</h2>
+          <p>Produtos, saldos, custos, preço de venda e percentual de comissão.</p>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="newProductBtn">+ Produto</button>
+          <button class="primary" id="newMoveBtn">+ Movimentação</button>
+          <a class="ghost link-btn" href="/export/estoque.csv">Exportar CSV</a>
+        </div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head"><div><h3>Produtos</h3><p>O percentual de comissão pode ser definido por produto considerando margem de lucro, custos operacionais e práticas de mercado do setor.</p></div></div>
+        <div class="products-table-legend">Visualização otimizada: produto em uma linha e linhas alternadas para leitura mais confortável.</div>
+        <div class="table-wrap">
+          <table id="productsTable">
+            <thead><tr><th>Código</th><th>Produto</th><th>Estoque</th><th>Custo</th><th>Preço</th><th>Margem</th><th>Comissão</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h3>Histórico de movimentações</h3><p>Entradas e saídas registradas</p></div></div>
+        <div class="table-wrap">
+          <table id="movesTable">
+            <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd.</th><th>Anterior</th><th>Final</th><th>Descrição</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" id="view-juros">
+      <div class="page-head">
+        <div>
+          <h2>Simulador de juros</h2>
+          <p>Taxa simples de 2,5% ao dia conforme o desafio.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section class="panel form-panel">
+          <h3>Dados do cálculo</h3>
+          <label>Valor da dívida</label>
+          <input id="interestValue" inputmode="decimal" placeholder="1.000,00">
+          <label>Data de vencimento</label>
+          <div class="input-row">
+            <input id="dueDate" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA">
+            <button class="ghost" id="todayBtn">Hoje</button>
+          </div>
+          <small id="dateFeedback">Digite a data no formato DD/MM/AAAA</small>
+          <div class="info-strip">Taxa aplicada: <b>2,5% ao dia</b></div>
+          <button class="primary full" id="calcBtn">Calcular agora</button>
+        </section>
+
+        <section class="panel result-panel">
+          <h3>Resultado</h3>
+          <span id="interestStatus" class="pill">AGUARDANDO DADOS</span>
+          <strong id="interestTotal">R$ 0,00</strong>
+          <p id="interestDetails">Preencha os campos para calcular.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="view-ferramentas">
+      <div class="page-head">
+        <div>
+          <h2>Ferramentas administrativas</h2>
+          <p>Exportações, backup e utilidades do sistema.</p>
+        </div>
+      </div>
+
+      <div class="tools-grid">
+        <article class="tool-card blue">
+          <span>CSV</span>
+          <h3>Exportar vendas</h3>
+          <p>Gera um arquivo CSV com vendas e comissões.</p>
+          <a class="primary link-btn" href="/export/vendas.csv">Executar</a>
+        </article>
+
+        <article class="tool-card green">
+          <span>▤</span>
+          <h3>Exportar estoque</h3>
+          <p>Gera um arquivo CSV com os saldos atuais.</p>
+          <a class="primary link-btn" href="/export/estoque.csv">Executar</a>
+        </article>
+
+        <article class="tool-card purple">
+          <span>DB</span>
+          <h3>Backup do banco</h3>
+          <p>Baixa uma cópia segura do banco SQLite.</p>
+          <a class="primary link-btn" href="/backup">Executar</a>
+        </article>
+
+        <article class="tool-card orange">
+          <span>PWA</span>
+          <h3>Instalar aplicação</h3>
+          <p>Instala o Mota Suite como app no dispositivo compatível.</p>
+          <button class="primary install-tool" id="installToolBtn">Instalar app</button>
+        </article>
+      </div>
+
+      <section class="panel database-card">
+        <h3>Banco de dados</h3>
+        <p>SQLite local com persistência das vendas, produtos e movimentações.</p>
+        <div class="db-meta">
+          <span>Banco: <b>desafio_dev.db</b></span>
+          <span>Modo: <b>Persistente</b></span>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" id="view-sobre">
+      <section class="panel profile">
+        <div class="profile-badge">AM</div>
+        <div>
+          <h2>Antonio (Junior) Mota</h2>
+          <p>Desenvolvedor Full Stack | PHP, Python, JS | APIs REST, Web, Visão Computacional & IA</p>
+          <div class="links">
+            <a href="https://www.linkedin.com/in/afmotajunior" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="https://antoniomotajr.github.io/portfolio/" target="_blank" rel="noopener noreferrer">Portfólio</a>
+            <a href="https://github.com/antoniomotajr" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://www.instagram.com/afmotajunior/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="mailto:antoniomotajr@gmail.com">E-mail</a>
+          </div>
+
+          <div class="about-actions">
+            <button class="primary" id="viewReadmeBtn">📘 Visualizar README</button>
+            <button class="ghost" id="viewRoadmapBtn">🚀 Possíveis evoluções</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel about-docs">
+        <div class="panel-head">
+          <div>
+            <h3>Documentação e evolução</h3>
+            <p>Consulte a documentação atual do projeto e o roadmap sugerido para próximas versões.</p>
+          </div>
+        </div>
+        <div class="about-doc-grid">
+          <article class="about-doc-card">
+            <strong>README do projeto</strong>
+            <p>Arquitetura, instalação, segurança, regras de negócio e uso do sistema.</p>
+            <button class="ghost" id="viewReadmeBtnCard">Abrir README</button>
+          </article>
+          <article class="about-doc-card">
+            <strong>Roadmap</strong>
+            <p>Ideias de evolução priorizadas para transformar o sistema em uma solução comercial.</p>
+            <button class="ghost" id="viewRoadmapBtnCard">Ver evoluções</button>
+          </article>
+        </div>
+      </section>
+
+      
+      <section class="panel">
+        <h3>Identificação deste build</h3>
+        <p class="signature-note">
+          Este software contém identificação técnica de autoria e integridade.
+        </p>
+        <div class="signature-grid">
+          <span><b>Titular:</b> Antonio (Junior) Mota</span>
+          <span><b>Build ID:</b> MBS-2E52A5EAD317D703</span>
+          <span><b>Fingerprint SHA-256:</b> <code>2e52a5ead317d703ab9a7ef9abafd68c5ac99c781f8ddae60b19565b19e10555</code></span>
+        </div>
+      </section>
+
+<section class="panel">
+        <h3>Stack e recursos</h3>
+        <div class="feature-grid">
+          <span>✓ Python + Flask</span>
+          <span>✓ SQLite</span>
+          <span>✓ PWA instalável</span>
+          <span>✓ Layout responsivo</span>
+          <span>✓ CRUD de vendas</span>
+          <span>✓ Gestão de estoque</span>
+          <span>✓ Exportação CSV</span>
+          <span>✓ Backup do banco</span>
+          <span>✓ Tema claro/escuro</span>
+          <span>✓ Android / iOS / Desktop</span>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div class="software-watermark" aria-hidden="true">
+    © Antonio (Junior) Mota • Mota Business Suite • MBS-2E52A5EAD317D703
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="modalTitle">Novo registro</h3>
+      <button class="icon-btn" id="closeModal">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script id="dashboardData" type="application/json">{{ dash.ranking|tojson }}</script>
+<script src="/static/app.js"></script>
+</body>
+</html>

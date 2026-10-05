@@ -1,0 +1,15 @@
+MOTA BUSINESS SUITE
+Aviso de autoria e uso
+
+Titular: Antonio (Junior) Mota
+Build ID: MBS-2E52A5EAD317D703
+Fingerprint SHA-256: 2e52a5ead317d703ab9a7ef9abafd68c5ac99c781f8ddae60b19565b19e10555
+
+Este arquivo identifica tecnicamente esta distribuição do Mota Business Suite.
+
+A marca d'água, o Build ID e o fingerprint não constituem mecanismo infalível
+de DRM. Eles servem como elementos de identificação, integridade e evidência
+de autoria.
+
+A remoção deliberada dessas identificações não transfere direitos autorais
+nem titularidade do software.
